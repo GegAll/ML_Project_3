@@ -121,8 +121,15 @@ def load_vaccine_candidates(filename):
         print(f"An error occured while readin the file: {e}")
     return vaccine_candidates
 
+def print_daily_results(results):
+    for day, infected, dead, immune, susceptible in zip(
+        results['day'], results['infected'], results['dead'], results['immune'], results['susceptible']
+    ):
+        print(
+            f"Day {day}: Infected={infected}, Dead={dead}, Immune={immune}, Not Infected={susceptible}"
+        )
 
-def plot_epidemic_curves(results, filename):
+def plot_epidemic_curves(results, filename, save_to_file=True):
     """
     Plots the epidemic curves for infected, dead, immune, and susceptible individuals.
 
@@ -146,7 +153,10 @@ def plot_epidemic_curves(results, filename):
     
     # Show the plot
     plt.tight_layout()
-    plt.savefig(f'{filename}.png')
+    if save_to_file:
+        plt.savefig(f'{filename}.png')
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -189,20 +199,8 @@ if __name__ == '__main__':
     )
 
     # Print results
-    for day, infected, dead, immune, susceptible in zip(
-        results_a['day'], results_a['infected'], results_a['dead'], results_a['immune'], results_a['susceptible']
-    ):
-        print(
-            f"Day {day}: Infected={infected}, Dead={dead}, Immune={immune}, Not Infected={susceptible}"
-        )
-
-    # Print results
-    for day, infected, dead, immune, susceptible in zip(
-        results_b['day'], results_b['infected'], results_b['dead'], results_b['immune'], results_b['susceptible']
-    ):
-        print(
-            f"Day {day}: Infected={infected}, Dead={dead}, Immune={immune}, Not Infected={susceptible}"
-        )
+    print_daily_results(results_a)
+    print_daily_results(results_b)
 
     plot_epidemic_curves(results_a, 'a_team_7')
     plot_epidemic_curves(results_b, 'b_team_7')

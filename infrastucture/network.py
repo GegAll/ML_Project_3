@@ -1,5 +1,5 @@
 from infrastucture import importer
-from user import User
+from infrastucture.user import User
 
 
 class Network:
@@ -180,7 +180,7 @@ def fill_network():
     print("Loaded all users")
 
     # Import relations between users
-    relations = importer.read_friends_file("../grupee_data/grupee_data/friends.csv")
+    relations = importer.read_friends_file("grupee_data/friends.csv")
     for relation in relations:
         network.add_relationship(relation[0], relation[1])
     print("Loaded all relations")
