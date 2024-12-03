@@ -1,10 +1,11 @@
 import random
+from tqdm import tqdm
 
 def simulate_epidemic(
     G, vaccine_candidates, concert_prob, attendence_prob, days=14, initial_infected=10
 ):
     """
-    Simulates an epidemic over a number of days with 100% mortality rate and tracks healthy individuals.
+    Simulates an epidemic over a number of days.
 
     Args:
         G (nx.Graph): Social graph.
@@ -15,7 +16,7 @@ def simulate_epidemic(
         initial_infected (int): Number of individuals to start as infected.
 
     Returns:
-        dict: Dictionary tracking daily outcomes (infected, dead, healthy).
+        dict: Dictionary tracking daily outcomes (infected, dead, immune).
     """
     # Initialize node attributes
     for node in G.nodes():
@@ -38,11 +39,14 @@ def simulate_epidemic(
         'day': [],
         'infected': [],
         'dead': [],
-        'healthy': []
+        'immune': [],
+        'susceptible': []
     }
 
-    for day in range(days):
+    for day in tqdm(range(days), desc='Simulation Days', leave=True):
         daily_infected = []
+        daily_dead = []
+        daily_immune = []
 
         # Simulate daily concert attendance
         for genre, prob in concert_prob.items():
@@ -73,16 +77,18 @@ def simulate_epidemic(
             if G.nodes[node]['status'] == 'infected':
                 G.nodes[node]['days_infected'] += 1
                 if G.nodes[node]['days_infected'] == 14:  # End of infection period
-                    G.nodes[node]['status'] = 'dead'
+                    if random.random() < 0.08:  # 8% chance of death
+                        G.nodes[node]['status'] = 'dead'
+                        daily_dead.append(node)
+                    else:
+                        G.nodes[node]['status'] = 'immune'
+                        daily_immune.append(node)
 
         # Record daily outcomes
-        healthy_count = len([
-            n for n in G.nodes
-            if G.nodes[n]['status'] in ['susceptible', 'vaccinated']
-        ])
         results['day'].append(day + 1)
         results['infected'].append(len([n for n in G.nodes if G.nodes[n]['status'] == 'infected']))
         results['dead'].append(len([n for n in G.nodes if G.nodes[n]['status'] == 'dead']))
-        results['healthy'].append(healthy_count)
+        results['immune'].append(len([n for n in G.nodes if G.nodes[n]['status'] == 'immune']))
+        results['susceptible'].append(len([n for n in G.nodes if G.nodes[n]['status'] == 'susceptible']))
 
     return results

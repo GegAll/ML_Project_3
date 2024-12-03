@@ -5,6 +5,7 @@ import networkx as nx
 import random
 from tqdm import tqdm
 from simulation import simulate_epidemic
+import matplotlib.pyplot as plt
 
 attendence_prob = {
     #(id1 likes, id2 likes)
@@ -32,7 +33,7 @@ def load_preferences():
     #                     ...
     #                       }
     preferences_dict = {}
-    for id in tqdm(preferences, desc='Load Preferences', leave=False):
+    for id in tqdm(preferences, desc='Load Preferences', leave=True):
         temp_dict = {}
         for i, genre in enumerate(concert_prob_per_day.keys()):
             temp_dict[genre] = int(preferences[id][i])
@@ -44,13 +45,13 @@ def load_preferences():
 
 def build_social_graph(friendships):
     G = nx.Graph()
-    for _, row in tqdm(friendships.iterrows(), desc='Build Graph', leave=False):
+    for _, row in tqdm(friendships.iterrows(), desc='Build Graph', leave=True):
         G.add_edge(row['id1'], row['id2'])
     return G
 
 
 def add_preferences_to_graph(G, preferences):
-    for node, genres in tqdm(preferences.items(), desc='Add Preferences', leave=False):
+    for node, genres in tqdm(preferences.items(), desc='Add Preferences', leave=True):
         if node in G:
             nx.set_node_attributes(G, {node: genres}, "preferences")
 
@@ -66,7 +67,7 @@ def compute_centralities(G):
 
 def simulate_concert_attendance(G, concert_prob, attendence_prob):
     infected_nodes = set()
-    for genre, prob in tqdm(concert_prob.items(), desc='Simulation', leave=False):
+    for genre, prob in tqdm(concert_prob.items(), desc='Simulation', leave=True):
         if random.random() < prob:
             # Identify attendees of this genre's concert
             attendees = [
@@ -105,6 +106,48 @@ def write_vaccine_candidates_to_file(vaccine_candidates, filename="vaccine_candi
     except Exception as e:
         print(f"An error occurred while writing to the file: {e}")
 
+def load_vaccine_candidates(filename):
+    vaccine_candidates = []
+    try:
+        with open(filename, "r") as file:
+            while True:
+                candidate=file.readline()
+                if not candidate:
+                    break
+                print(int(candidate))
+                vaccine_candidates.append(int(candidate))
+        print(f"Vaccine candidate successfully read from {filename}")
+    except Exception as e:
+        print(f"An error occured while readin the file: {e}")
+    return vaccine_candidates
+
+
+def plot_epidemic_curves(results, filename):
+    """
+    Plots the epidemic curves for infected, dead, immune, and susceptible individuals.
+
+    Args:
+        results (dict): Dictionary containing daily counts for infected, dead, immune, and susceptible.
+    """
+    plt.figure(figsize=(10, 6))
+    
+    # Plot each category
+    plt.plot(results['day'], results['infected'], label="Infected", color='orange', linewidth=2)
+    plt.plot(results['day'], results['dead'], label="Dead", color='red', linewidth=2)
+    plt.plot(results['day'], results['immune'], label="Immune", color='green', linewidth=2)
+    plt.plot(results['day'], results['susceptible'], label="Not Infected", color='blue', linewidth=2)
+    
+    # Add titles and labels
+    plt.title("Epidemic Simulation Curves", fontsize=16)
+    plt.xlabel("Days", fontsize=14)
+    plt.ylabel("Number of Individuals", fontsize=14)
+    plt.legend(fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    # Show the plot
+    plt.tight_layout()
+    plt.savefig(f'{filename}.png')
+
 
 if __name__ == '__main__':
     # Load data
@@ -118,17 +161,27 @@ if __name__ == '__main__':
     add_preferences_to_graph(G, preferences)
     
     # Compute centrality measures
-    degree_centrality, betweenness_centrality, closeness_centrality = compute_centralities(G)
+    # degree_centrality, betweenness_centrality, closeness_centrality = compute_centralities(G)
 
     # Select vaccine candidates
-    vaccine_candidates = select_vaccine_candidates(G, degree_centrality, percent=0.12)
+    a_vaccine_candidates = load_vaccine_candidates('a_team_7.txt')
+    b_vaccine_candidates = load_vaccine_candidates('b_team_7.txt')
 
-    write_vaccine_candidates_to_file(vaccine_candidates)
+    # write_vaccine_candidates_to_file(vaccine_candidates)
 
     print('SIMUALTION ...')
-    results = simulate_epidemic(
+    results_a = simulate_epidemic(
         G,
-        vaccine_candidates,
+        a_vaccine_candidates,
+        concert_prob_per_day,
+        attendence_prob,
+        days=365,  # Simulate for 30 days
+        initial_infected=50
+    )
+
+    results_b = simulate_epidemic(
+        G,
+        a_vaccine_candidates,
         concert_prob_per_day,
         attendence_prob,
         days=365,  # Simulate for 30 days
@@ -136,9 +189,20 @@ if __name__ == '__main__':
     )
 
     # Print results
-    for day, infected, dead, healthy in zip(
-        results['day'], results['infected'], results['dead'], results['healthy']
+    for day, infected, dead, immune, susceptible in zip(
+        results_a['day'], results_a['infected'], results_a['dead'], results_a['immune'], results_a['susceptible']
     ):
         print(
-            f"Day {day}: Infected={infected}, Dead={dead}, Healthy={healthy}"
+            f"Day {day}: Infected={infected}, Dead={dead}, Immune={immune}, Not Infected={susceptible}"
         )
+
+    # Print results
+    for day, infected, dead, immune, susceptible in zip(
+        results_b['day'], results_b['infected'], results_b['dead'], results_b['immune'], results_b['susceptible']
+    ):
+        print(
+            f"Day {day}: Infected={infected}, Dead={dead}, Immune={immune}, Not Infected={susceptible}"
+        )
+
+    plot_epidemic_curves(results_a, 'a_team_7')
+    plot_epidemic_curves(results_b, 'b_team_7')
