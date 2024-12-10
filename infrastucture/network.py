@@ -1,3 +1,6 @@
+import json
+
+from experiment import concert_prob_per_day
 from infrastucture import importer
 from infrastucture.user import User
 
@@ -184,5 +187,17 @@ def fill_network():
     for relation in relations:
         network.add_relationship(relation[0], relation[1])
     print("Loaded all relations")
+    
+    # Load preferences from preferences.json
+    with open("grupee_data/preferences.json", "r") as pref_file:
+        preferences = json.load(pref_file)
+
+        preferences_dict = {}
+        for id in preferences:
+            temp_dict = {}
+            for i, genre in enumerate(concert_prob_per_day.keys()):
+                temp_dict[genre] = int(preferences[id][i])
+
+            network.get_user_by_id(int(id)).set_preferences(temp_dict)
 
     return network
