@@ -2,7 +2,7 @@ from experiment import concert_prob_per_day
 from infrastucture.network import fill_network, Network
 from simulation import simulate_epidemic
 from vaccination import add_preferences_to_graph, attendence_prob, build_social_graph, load_friendships, \
-    load_preferences, plot_epidemic_curves, print_daily_results
+    load_preferences, plot_epidemic_curves, print_daily_results, write_vaccine_candidates_to_file
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -133,16 +133,16 @@ def avg_and_plot(data):
     plt.show()
 
 def try_strategy(ids, average_number=1):
+    print("LOAD DATA:")
+    friendships = load_friendships()
+    preferences = load_preferences()
+
+    G = build_social_graph(friendships)
+    add_preferences_to_graph(G, preferences)
+
+    print("SIMULATING:")
     all_results = []
     for i in range(average_number):
-        print("LOAD DATA:")
-        friendships = load_friendships()
-        preferences = load_preferences()
-
-        G = build_social_graph(friendships)
-        add_preferences_to_graph(G, preferences)
-        print("SIMULATING:")
-
         result = simulate_epidemic(G, ids, concert_prob_per_day, attendence_prob, days=200, initial_infected=81)
         all_results.append(result)
 
@@ -158,14 +158,11 @@ def try_strategy(ids, average_number=1):
     avg_and_plot(all_results)
 
 #try_strategy(strategy_no_vaccination(), average_number=10)
-try_strategy(strategy_random_vaccination(), average_number=20)
+try_strategy(strategy_random_vaccination(), average_number=20) # ~375 dead
 #try_strategy(strategy_most_friends(), average_number=10)
 #try_strategy(strategy_most_genres_interested(), average_number=10)
 #try_strategy(strategy_friends_with_most_concert_interests(), average_number=10)
-try_strategy(strategy_most_friends_with_common_preferences(), average_number=20)
-try_strategy(strategy_most_friends_with_common_preferences_with_concert_prob(), average_number=20)
+try_strategy(strategy_most_friends_with_common_preferences(), average_number=20) # ~155 dead
+try_strategy(strategy_most_friends_with_common_preferences_with_concert_prob(), average_number=20) # ~145 dead
 
-
-
-
-
+#write_vaccine_candidates_to_file(strategy_most_friends_with_common_preferences_with_concert_prob(), filename="superspreader_a_team_7.txt")
