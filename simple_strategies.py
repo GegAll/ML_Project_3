@@ -6,10 +6,20 @@ from vaccination import add_preferences_to_graph, attendence_prob, build_social_
 
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 def strategy_no_vaccination():
-    return [], fill_network()
+    return []
 
+
+def strategy_random_vaccination():
+    network = fill_network()
+
+    all_users = list(network.users)
+    sample_size = max(1, len(all_users) * 12 // 100)
+    random_users = random.sample(all_users, sample_size)
+
+    return random_users
 
 def strategy_most_friends():
     network = fill_network()
@@ -19,7 +29,7 @@ def strategy_most_friends():
     top_12_percent_count = max(1, len(sorted_users_by_friends) * 12 // 100)
     top_12_percent_users = sorted_users_by_friends[:top_12_percent_count]
 
-    return top_12_percent_users, network
+    return top_12_percent_users
 
 
 def strategy_most_genres_interested():
@@ -30,7 +40,7 @@ def strategy_most_genres_interested():
     top_12_percent_count = max(1, len(sorted_users_by_concerts) * 12 // 100)
     top_12_percent_users = sorted_users_by_concerts[:top_12_percent_count]
 
-    return top_12_percent_users, network
+    return top_12_percent_users
 
 def strategy_friends_with_most_concert_interests():
     network = fill_network()
@@ -46,7 +56,7 @@ def strategy_friends_with_most_concert_interests():
     top_12_percent_count = max(1, len(sorted_users_by_friends_concert_interest) * 12 // 100)
     top_12_percent_users = sorted_users_by_friends_concert_interest[:top_12_percent_count]
 
-    return top_12_percent_users, network
+    return top_12_percent_users
 
 def strategy_most_friends_with_common_preferences():
     network = fill_network()
@@ -65,7 +75,7 @@ def strategy_most_friends_with_common_preferences():
     top_12_percent_count = max(1, len(sorted_users_by_shared_prefs) * 12 // 100)
     top_12_percent_users = sorted_users_by_shared_prefs[:top_12_percent_count]
 
-    return top_12_percent_users, network
+    return top_12_percent_users
 
 def strategy_most_friends_with_common_preferences_with_concert_prob():
     network = fill_network()
@@ -85,7 +95,7 @@ def strategy_most_friends_with_common_preferences_with_concert_prob():
     top_12_percent_count = max(1, len(sorted_users_by_shared_prefs) * 12 // 100)
     top_12_percent_users = sorted_users_by_shared_prefs[:top_12_percent_count]
 
-    return top_12_percent_users, network
+    return top_12_percent_users
 
 
 def avg_and_plot(data):
@@ -122,11 +132,9 @@ def avg_and_plot(data):
     plt.legend()
     plt.show()
 
-def try_strategy(to_try, average_number=1):
+def try_strategy(ids, average_number=1):
     all_results = []
     for i in range(average_number):
-        ids, network = to_try()
-
         print("LOAD DATA:")
         friendships = load_friendships()
         preferences = load_preferences()
@@ -149,12 +157,13 @@ def try_strategy(to_try, average_number=1):
 
     avg_and_plot(all_results)
 
-#try_strategy(strategy_no_vaccination, average_number=10)
-#try_strategy(strategy_most_friends, average_number=10)
-#try_strategy(strategy_most_genres_interested, average_number=10)
-#try_strategy(strategy_friends_with_most_concert_interests, average_number=10)
-try_strategy(strategy_most_friends_with_common_preferences, average_number=20)
-try_strategy(strategy_most_friends_with_common_preferences_with_concert_prob, average_number=20)
+#try_strategy(strategy_no_vaccination(), average_number=10)
+try_strategy(strategy_random_vaccination(), average_number=20)
+#try_strategy(strategy_most_friends(), average_number=10)
+#try_strategy(strategy_most_genres_interested(), average_number=10)
+#try_strategy(strategy_friends_with_most_concert_interests(), average_number=10)
+try_strategy(strategy_most_friends_with_common_preferences(), average_number=20)
+try_strategy(strategy_most_friends_with_common_preferences_with_concert_prob(), average_number=20)
 
 
 
